@@ -1,0 +1,431 @@
+/*
+ * Estilo do Launcher: mesma linguagem do app (DESIGN.md, inspirada nas HIG da Apple).
+ * Segue o tema do Windows (claro ou escuro), tipografia do sistema, botões em pílula
+ * e o bronze da marca só nas ações. Tokens no :root; nada de fontes ou imagens
+ * externas (CSP só 'self').
+ */
+:root {
+  color-scheme: light dark;
+  --bg: #f5f5f7;
+  --panel: #ffffff;
+  --panel-2: #fbfbfd;
+  --fill: #e8e8ed;
+  --fill-hover: #dcdce1;
+  --line: #e5e5ea;
+  --ink: #1d1d1f;
+  --muted: #6e6e73;
+  --gold: #8a5a2c;
+  --gold-2: #73481f;
+  --on-gold: #ffffff;
+  --gold-soft: #f4ece2;
+  --ok: #1d7d3a;
+  --ok-soft: #e8f5ec;
+  --danger: #c4281c;
+  --danger-soft: #fdeeed;
+  --radius: 18px;
+  --shadow: 0 1px 2px rgb(0 0 0 / 4%), 0 8px 28px rgb(0 0 0 / 6%);
+  --mono: "SF Mono", "Cascadia Mono", Consolas, ui-monospace, monospace;
+  --sans:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable Text",
+    "Segoe UI", system-ui, sans-serif;
+  --display:
+    -apple-system, BlinkMacSystemFont, "SF Pro Display",
+    "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #000000;
+    --panel: #1c1c1e;
+    --panel-2: #232325;
+    --fill: #3a3a3c;
+    --fill-hover: #48484a;
+    --line: #333336;
+    --ink: #f5f5f7;
+    --muted: #a1a1a6;
+    --gold: #dcb27c;
+    --gold-2: #ecc794;
+    --on-gold: #1d1d1f;
+    --gold-soft: #33291d;
+    --ok: #6fd38b;
+    --ok-soft: #16301f;
+    --danger: #ff8a80;
+    --danger-soft: #3a1d1b;
+    --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 8px 28px rgb(0 0 0 / 40%);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+body {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.47 var(--sans);
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+}
+.muted {
+  color: var(--muted);
+}
+.gold {
+  color: var(--gold);
+}
+
+/* ---------- topo ---------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  height: 60px;
+  padding: 0 28px;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: saturate(180%) blur(20px);
+}
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--display);
+  font-size: 16px;
+  font-weight: 600;
+}
+.brand img {
+  align-self: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+}
+.brand .muted {
+  font-weight: 400;
+}
+.tabs {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  margin: 0 auto;
+  border-radius: 10px;
+  background: var(--fill);
+}
+.tabs button {
+  background: transparent;
+  border: 0;
+  color: var(--ink);
+  padding: 5px 18px;
+  border-radius: 8px;
+  font: 500 13px var(--sans);
+  cursor: pointer;
+  transition: background 160ms var(--ease);
+}
+.tabs button:hover {
+  background: color-mix(in srgb, var(--panel) 50%, transparent);
+}
+.tabs button.active {
+  background: var(--panel);
+  font-weight: 600;
+  box-shadow:
+    0 1px 3px rgb(0 0 0 / 10%),
+    0 0 0 0.5px rgb(0 0 0 / 4%);
+}
+
+/* ---------- botões ---------- */
+button {
+  font-family: inherit;
+}
+.primary,
+.ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  border: 0;
+  border-radius: 980px;
+  padding: 8px 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition:
+    background 160ms var(--ease),
+    transform 120ms var(--ease);
+}
+.primary {
+  color: var(--on-gold);
+  background: var(--gold);
+}
+.primary:hover:not(:disabled) {
+  background: var(--gold-2);
+}
+.primary:active:not(:disabled),
+.ghost:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.primary:disabled,
+.ghost:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.ghost {
+  background: var(--fill);
+  color: var(--ink);
+}
+.ghost:hover:not(:disabled) {
+  background: var(--fill-hover);
+}
+button:focus-visible,
+input:focus-visible,
+summary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--gold) 30%, transparent);
+}
+
+/* ---------- faixas ---------- */
+.banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 16px 28px 0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--gold-soft);
+  font-size: 14px;
+}
+.banner.error {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.banner[hidden] {
+  display: none;
+}
+
+/* ---------- conteúdo ---------- */
+main {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 44px 28px 48px;
+}
+.tab {
+  max-width: 980px;
+  margin: 0 auto;
+}
+.eyebrow {
+  color: var(--gold);
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 6px;
+}
+h1 {
+  font-family: var(--display);
+  font-size: clamp(32px, 4.4vw, 48px);
+  font-weight: 700;
+  line-height: 1.08;
+  margin: 0 0 14px;
+  letter-spacing: -0.03em;
+}
+.lead {
+  color: var(--muted);
+  font-size: 17px;
+  max-width: 640px;
+  margin: 0 0 36px;
+}
+
+/* ---------- cartão do app ---------- */
+.apps {
+  display: grid;
+  gap: 20px;
+}
+.app-card {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+.app-cover {
+  background: #1a1a1a;
+  display: grid;
+  place-items: center;
+}
+.app-cover img {
+  width: 100%;
+  height: 100%;
+  max-height: 320px;
+  object-fit: contain;
+  padding: 24px;
+}
+.app-body {
+  padding: 28px 32px;
+}
+.app-body .eyebrow {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 500;
+}
+.app-body h2 {
+  margin: 0 0 4px;
+  font-family: var(--display);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.app-body p {
+  margin: 0 0 12px;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 20px;
+}
+.chip {
+  border-radius: 980px;
+  padding: 3px 10px;
+  color: var(--muted);
+  background: var(--fill);
+  font-size: 12px;
+  font-weight: 500;
+}
+.chip.ok {
+  color: var(--ok);
+  background: var(--ok-soft);
+}
+.chip.gold {
+  color: var(--gold);
+  background: var(--gold-soft);
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.progress {
+  height: 4px;
+  margin-top: 16px;
+  border-radius: 980px;
+  background: var(--fill);
+  overflow: hidden;
+}
+.progress span {
+  display: block;
+  height: 100%;
+  background: var(--gold);
+  transition: width 0.2s var(--ease);
+}
+.error-text {
+  color: var(--danger);
+  margin-top: 12px;
+}
+.notes {
+  margin-top: 22px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+.notes summary {
+  cursor: pointer;
+  color: var(--gold);
+  font-size: 14px;
+  font-weight: 500;
+}
+.notes ul {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.notes li + li {
+  margin-top: 4px;
+}
+.notes b {
+  color: var(--ink);
+}
+.notes code {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--fill);
+  color: var(--ink);
+}
+
+/* ---------- configurações e sobre ---------- */
+.toggle {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+.toggle input {
+  accent-color: var(--gold);
+  width: 18px;
+  height: 18px;
+}
+.field {
+  display: grid;
+  gap: 8px;
+  margin-top: 24px;
+}
+.field-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.field code {
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--panel);
+  box-shadow: 0 0 0 1px var(--line);
+  font-family: var(--mono);
+  font-size: 13px;
+  word-break: break-all;
+}
+.principles {
+  padding-left: 18px;
+  color: var(--muted);
+}
+.principles li + li {
+  margin-top: 6px;
+}
+.principles b {
+  color: var(--ink);
+}
+
+/* ---------- rodapé ---------- */
+.statusbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 28px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+@media (max-width: 760px) {
+  .app-card {
+    grid-template-columns: 1fr;
+  }
+  .app-cover {
+    max-height: 200px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}

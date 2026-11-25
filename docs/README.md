@@ -1,0 +1,57 @@
+# Documentation
+
+Documentação do Soul Cars, organizada por assunto (pastas e arquivos em inglês; textos em português).
+
+## Comece aqui
+
+- [Technology stack](architecture/technology-stack.md) — tecnologias, motores e ferramentas.
+- [Technical review and roadmap](architecture/technical-review.md) — crítica técnica e melhorias recomendadas (trilhos do roadmap.sh).
+- [AI assistant overview](development/ai-assistant-overview.md) — mapa do app para assistentes de IA.
+
+## `guides/` — uso do app
+
+| Documento | Assunto |
+|---|---|
+| [getting-started.md](guides/getting-started.md) | Instalação e primeiro uso |
+| [user-manual.md](guides/user-manual.md) | Manual do usuário: do estoque ao anúncio |
+| [studio-flow.md](guides/studio-flow.md) | Fluxo de produção no Studio |
+| [data-and-backup.md](guides/data-and-backup.md) | Onde ficam os dados e como fazer backup |
+| [smart-app-control.md](guides/smart-app-control.md) | O Windows bloqueou o Soul Cars (Smart App Control) |
+
+## `architecture/` — como o sistema é montado
+
+| Documento | Assunto |
+|---|---|
+| [technology-stack.md](architecture/technology-stack.md) | Inventário de tecnologias |
+| [technical-review.md](architecture/technical-review.md) | Crítica e roadmap técnico |
+| [launcher-and-updates.md](architecture/launcher-and-updates.md) | Launcher, manifesto e fluxo de releases |
+| [architecture-and-migration.md](architecture/architecture-and-migration.md) | Arquitetura e histórico da migração |
+| [python-engine.md](architecture/python-engine.md) | Motor Python |
+| [implementation-details.md](architecture/implementation-details.md) | Contratos e detalhes de implementação |
+
+## `development/` — para quem mexe no código
+
+| Documento | Assunto |
+|---|---|
+| [developer-manual.md](development/developer-manual.md) | Manual do desenvolvedor |
+| [vibe-coding-guide.md](development/vibe-coding-guide.md) | Alterações com assistentes de IA |
+| [validation.md](development/validation.md) | Validação (testes, smokes) |
+| [github-workflow.md](development/github-workflow.md) | GitHub, CI e releases |
+| [handoff-context.md](development/handoff-context.md) | Contexto técnico para retomar o projeto |
+| [agents.md](development/agents.md) | Agentes do projeto, método de verificação e hook de proteção |
+
+## `ai/` — Laboratório de testes da IA
+
+[lab.md](ai/lab.md) · [lab-cenarios.md](ai/lab-cenarios.md) (lista gerada dos cenários)
+
+## `crm/` — CRM e Soul IA
+
+[crm-market-research.md](crm/crm-market-research.md) · [crm-data-and-reports.md](crm/crm-data-and-reports.md) · [soul-ai.md](crm/soul-ai.md)
+
+## `video/` — Editor Mágico de vídeo
+
+[editorial-captions.md](video/editorial-captions.md) · [soul-motion.md](video/soul-motion.md) · [typography-and-glow.md](video/typography-and-glow.md) · [contextual-caption-library.md](video/contextual-caption-library.md) · [banner-layout-and-motion.md](video/banner-layout-and-motion.md) · [animated-closing-logo.md](video/animated-closing-logo.md)
+
+> Documentos anteriores à versão 1.0 reestruturada podem citar nomes antigos de arquivos
+> em português; os caminhos foram atualizados automaticamente, mas descrições históricas
+> foram mantidas como registro.

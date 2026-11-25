@@ -1,0 +1,35 @@
+node_modules/
+.tmp/
+out/
+dist/
+apps/engine/.venv/
+**/__pycache__/
+*.pyc
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+/ESTOQUE/
+/dados/
+/.perfil-bndv/
+*.db
+*.db-wal
+*.db-shm
+*.log
+.DS_Store
+
+# Dados da loja (pesados, ficam dentro do projeto, nunca vão para o GitHub)
+/dados-loja/
+
+# Trilha do vídeo: origem/licença não documentada, não é redistribuída. Coloque a sua em
+# %APPDATA%/soul-cars-app/trilha/TRILHA.flac (ou em PROJETO/ASSETS do veículo).
+apps/engine/video/assets/TRILHA.*
+
+# Restos locais da reestruturação
+.restructure/
+.ruff_cache/
+.promptfoo/
+
+# Resultados locais dos evals e do Laboratório da IA (podem conter respostas de modelo/dados de teste)
+apps/desktop/resultado-eval.*
+lab-ia/

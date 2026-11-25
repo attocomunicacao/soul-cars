@@ -1,0 +1,215 @@
+/**
+ * Validação dos argumentos que a interface manda pelo IPC.
+ *
+ * Cada comando tem um esquema (`ipc-esquemas.ts`). Só o que o esquema declara
+ * chega ao comando: campos a mais são descartados e campos errados viram erro
+ * em português, antes de qualquer acesso a disco, banco ou processo.
+ * Sem dependências externas de propósito.
+ */
+import fs from "node:fs";
+import path from "node:path";
+
+export type Regra<T = unknown> = (valor: unknown, campo: string) => T;
+export type Esquema = {
+  args?: Record<string, Regra>;
+  /**
+   * Validação que depende de mais de um campo (ex.: os `params` de `engine_call` variam com o `method`).
+   * Roda sobre os argumentos já validados e devolve os argumentos finais.
+   */
+  depois?: (args: Record<string, unknown>) => Record<string, unknown>;
+  cabecalhos?: Record<string, Regra>;
+  corpo?: "obrigatorio";
+};
+
+const erro = (campo: string, esperado: string): never => {
+  throw new Error(`Argumento inválido: "${campo}" deve ser ${esperado}.`);
+};
+
+const ehObjetoPlano = (v: unknown): v is Record<string, unknown> =>
+  typeof v === "object" &&
+  v !== null &&
+  !Array.isArray(v) &&
+  !(v instanceof Uint8Array);
+
+export const texto =
+  (opcoes: { max?: number; vazio?: boolean } = {}): Regra<string> =>
+  (v, campo) => {
+    if (typeof v !== "string") return erro(campo, "um texto");
+    if (v.includes("\0")) return erro(campo, "um texto sem caracteres nulos");
+    if (!opcoes.vazio && v.trim() === "") return erro(campo, "não vazio");
+    if (v.length > (opcoes.max ?? 4096))
+      return erro(campo, `um texto de até ${opcoes.max ?? 4096} caracteres`);
+    return v;
+  };
+
+export const numero: Regra<number> = (v, campo) =>
+  typeof v === "number" && Number.isFinite(v) ? v : erro(campo, "um número");
+
+export const inteiro: Regra<number> = (v, campo) =>
+  typeof v === "number" && Number.isSafeInteger(v)
+    ? v
+    : erro(campo, "um número inteiro");
+
+export const booleano: Regra<boolean> = (v, campo) =>
+  typeof v === "boolean" ? v : erro(campo, "verdadeiro ou falso");
+
+/** Id de veículo: número inteiro positivo, ou o mesmo número como texto (cabeçalhos). */
+export const idVeiculo: Regra<number | string> = (v, campo) => {
+  if (typeof v === "number" && Number.isSafeInteger(v) && v >= 0) return v;
+  if (typeof v === "string" && /^\d{1,15}$/.test(v)) return v;
+  return erro(campo, "um id de veículo");
+};
+
+export const umDe =
+  <T extends string>(...valores: T[]): Regra<T> =>
+  (v, campo) =>
+    valores.includes(v as T)
+      ? (v as T)
+      : erro(campo, `um de: ${valores.join(", ")}`);
+
+/** Campo que pode faltar ou ser nulo: vira `undefined`. */
+export const opcional =
+  <T>(regra: Regra<T>): Regra<T | undefined> =>
+  (v, campo) =>
+    v === undefined || v === null ? undefined : regra(v, campo);
+
+/** Aceita nulo (grava NULL) e mantém o nulo; ausente vira `undefined`. */
+export const anulavel =
+  <T>(regra: Regra<T>): Regra<T | null | undefined> =>
+  (v, campo) =>
+    v === undefined ? undefined : v === null ? null : regra(v, campo);
+
+export const lista =
+  <T>(regra: Regra<T>, max = 1000): Regra<T[]> =>
+  (v, campo) => {
+    if (!Array.isArray(v)) return erro(campo, "uma lista");
+    if (v.length > max) return erro(campo, `uma lista de até ${max} itens`);
+    return v.map((item, i) => regra(item, `${campo}[${i}]`));
+  };
+
+export const objeto =
+  (campos: Record<string, Regra>): Regra<Record<string, unknown>> =>
+  (v, campo) => {
+    if (!ehObjetoPlano(v)) return erro(campo, "um objeto");
+    return aplicar(campos, v, campo);
+  };
+
+/** Objeto sem forma fixa (parâmetros do motor): precisa ser objeto e conter só dados. */
+export const objetoLivre: Regra<Record<string, unknown>> = (v, campo) =>
+  ehObjetoPlano(v) ? v : erro(campo, "um objeto");
+
+const minusculas = (s: string) =>
+  process.platform === "win32" ? s.toLowerCase() : s;
+
+/**
+ * Caminho absoluto com symlinks e junctions resolvidos. Se o caminho ainda não existe,
+ * resolve o ancestral mais próximo que existe e reanexa o resto.
+ */
+export function resolverReal(caminho: string): string {
+  const completo = path.resolve(caminho);
+  try {
+    return fs.realpathSync.native(completo);
+  } catch {
+    const pai = path.dirname(completo);
+    if (pai === completo) return completo;
+    return path.join(resolverReal(pai), path.basename(completo));
+  }
+}
+
+/** Diz se `alvo` é a `raiz` ou está dentro dela, seguindo symlinks e junctions. */
+export function dentroDe(raiz: string, alvo: string) {
+  const r = minusculas(resolverReal(raiz));
+  const a = minusculas(resolverReal(alvo));
+  return a === r || a.startsWith(r + path.sep);
+}
+
+/**
+ * Guarda os caminhos que o usuário escolheu num diálogo nativo. Configurações sensíveis
+ * (raiz dos dados, pasta do motor) só aceitam um caminho que saiu de um diálogo, nunca texto
+ * montado pela interface.
+ */
+export function criarCaminhosEscolhidos() {
+  const chave = (p: string) => minusculas(path.resolve(p));
+  const escolhidos = new Set<string>();
+  return {
+    /** Registra um caminho devolvido pelo diálogo. */
+    lembrar(p: string) {
+      escolhidos.add(chave(p));
+    },
+    /** Falha se o caminho não veio de um diálogo nativo. */
+    exigir(p: string, campo: string) {
+      if (!escolhidos.has(chave(p)))
+        throw new Error(
+          `${campo}: escolha a pasta pelo seletor de pastas, não por texto.`,
+        );
+    },
+  };
+}
+
+/** Caminho que precisa estar dentro de alguma das raízes autorizadas. */
+export const caminhoEmRaizes =
+  (raizes: () => string[]): Regra<string> =>
+  (v, campo) => {
+    const caminho = texto({ max: 1024 })(v, campo);
+    if (!path.isAbsolute(caminho)) return erro(campo, "um caminho completo");
+    if (!raizes().some((raiz) => dentroDe(raiz, caminho)))
+      throw new Error(
+        "Esta pasta está fora da pasta de dados do app. Atualize o Estoque ou ajuste a raiz em Configurações.",
+      );
+    return caminho;
+  };
+
+/** Caminho completo qualquer (escolhido pelo usuário num diálogo). */
+export const caminhoQualquer: Regra<string> = (v, campo) => {
+  const caminho = texto({ max: 1024 })(v, campo);
+  return path.isAbsolute(caminho)
+    ? caminho
+    : erro(campo, "um caminho completo");
+};
+
+function aplicar(
+  campos: Record<string, Regra>,
+  origem: Record<string, unknown>,
+  prefixo: string,
+) {
+  const saida: Record<string, unknown> = {};
+  for (const [nome, regra] of Object.entries(campos)) {
+    const valor = regra(origem[nome], prefixo ? `${prefixo}.${nome}` : nome);
+    if (valor !== undefined) saida[nome] = valor;
+  }
+  return saida;
+}
+
+export const LIMITE_CORPO = 200 * 1024 * 1024;
+
+/** Valida a chamada inteira e devolve só o que o comando pode ver. */
+export function validarChamada(
+  comando: string,
+  esquema: Esquema,
+  args: unknown,
+  cabecalhos: unknown,
+  corpo: Uint8Array | null,
+) {
+  const bruto = args === undefined || args === null ? {} : args;
+  if (!ehObjetoPlano(bruto)) return erro("args", "um objeto");
+  const brutoCab =
+    cabecalhos === undefined || cabecalhos === null ? {} : cabecalhos;
+  if (!ehObjetoPlano(brutoCab)) return erro("cabecalhos", "um objeto");
+
+  const aplicados = aplicar(esquema.args ?? {}, bruto, "");
+  const limpos = esquema.depois ? esquema.depois(aplicados) : aplicados;
+  const limposCab = aplicar(esquema.cabecalhos ?? {}, brutoCab, "cabeçalho");
+
+  if (corpo !== null && !(corpo instanceof Uint8Array))
+    return erro("corpo", "bytes");
+  if (corpo && corpo.byteLength > LIMITE_CORPO)
+    throw new Error("Arquivo grande demais.");
+  if (esquema.corpo === "obrigatorio" && !corpo)
+    throw new Error(`O comando ${comando} exige um arquivo.`);
+  const corpoFinal = esquema.corpo === "obrigatorio" ? corpo : null;
+  return {
+    args: limpos,
+    cabecalhos: limposCab as Record<string, string>,
+    corpo: corpoFinal,
+  };
+}
